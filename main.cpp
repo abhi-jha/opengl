@@ -2,72 +2,80 @@
 #include <cmath>
 #include "GL/glew.h"
 #include "GL/freeglut.h"
-
-void setPixel(int x, int y);
-void ddaline(int x0, int y0, int x1, int y1);
-int roundnum(double number);
-int a, b, c, d;
-
-void init() {
-    glClearColor(0.0, 255.0, 255.0, 0.0);
-    glLoadIdentity();
-    gluOrtho2D(-300, 300, -300, 300);
+#define ROUND(a) ((int)(a+0.5))
+int cor_1, cor_2, cor_3, cor_4;
+void setDrawingColor(GLfloat d = 255.0, GLfloat e = 255.0, GLfloat f = 255.0)
+{
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glColor3f(d, e, f);
 }
-
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);
+void init()
+{
     glMatrixMode(GL_PROJECTION);
-    glFlush();
-    glColor3f(1.0, 1.0, 1.0);
-    ddaline(0, -300, 0, 300);
-    ddaline(-300, 0, 300, 0);
-    glColor3f(1.0, 1.0, 0.0);
-    ddaline(a, b, c, d);
+    glLoadIdentity();
+    gluOrtho2D(0.0, 500.0, 0.0, 500.0);
+    glMatrixMode(GL_MODELVIEW);
 }
-
-void ddaline(int x0, int y0, int x1, int y1) {
-    int dy = y1 - y0;
-    int dx = x1 - x0;
-    int steps, i;
-    float xinc, yinc, x = x0, y = y0;
-    if (abs(dx) > abs(dy))
-        steps = abs(dx);
-    else
-        steps = abs(dy);
-    xinc = (float) dx / (float) steps;
-    yinc = (float) dy / (float) steps;
-    setPixel(roundnum(x), roundnum(y));
-    for (i = 0; i < steps; i++) {
-        x += xinc;
-        y += yinc;
-        setPixel(roundnum(x), roundnum(y));
-    }
-    glutSwapBuffers();
-    glFlush();
-}
-
-
-int roundnum(double number) {
-    return (number >= 0) ? (int) (number + 0.5) : (int) (number - 0.5);
-}
-
-void setPixel(int x, int y) {
+void setPixel(int x, int y)
+{
+    setDrawingColor(0.0, 255.0, 0.0);
     glBegin(GL_POINTS);
-    glVertex2f(x, y);
+    glVertex2i(x, y);
     glEnd();
+    glFlush();
 }
-
-int main(int argc, char **argv) {
-    printf("Enter (x1,y1)\n");
-    scanf("%d%d", &a, &b);
-    printf("Enter (x2,y2)\n");
-    scanf("%d%d", &c, &d);
+void setAxes()
+{
+    setDrawingColor(0.0, 255.0, 255.0);
+    glBegin(GL_LINE_STRIP);
+    glVertex2i(250, 250);
+    glVertex2i(450, 250);
+    glVertex2i(250, 250);
+    glVertex2i(250, 450);
+    glVertex2i(250, 250);
+    glVertex2i(250, 50);
+    glVertex2i(250, 250);
+    glVertex2i(50, 250);
+    glEnd();
+    glFlush();
+}
+void DDA(int cor_1, int cor_2, int cor_3, int cor_4)
+{
+    int dx, dy,step,offset=250;
+    dx = (cor_3 - cor_1);
+    dy = (cor_4 - cor_2);
+    if (abs(dx) > abs(dy))
+        step = abs(dx);
+    else
+        step = abs(dy);
+    setPixel(offset+cor_3, offset+cor_4);
+    for (int i = 0; i < step; i++)
+    {
+        cor_1 = cor_1 + dx / step;
+        cor_2 = cor_2 + dy / step;
+        std::cout << "cor_1 = " << cor_1 << "  cor_2 = " << cor_2 << "\n";
+        setPixel(offset+ROUND(cor_1), offset+ROUND(cor_2));
+    }
+}
+void display()
+{
+    setAxes();
+    if (cor_1 < cor_3)
+        DDA(cor_1, cor_2, cor_3, cor_4);
+    else
+        DDA(cor_3, cor_4, cor_1, cor_2);
+}
+int main(int argc, char **argv)
+{
+    std::cout << "Enter the coordinates\n";
+    std::cin >> cor_1 >> cor_2 >> cor_3 >> cor_4;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(600, 600);
-    glutInitWindowPosition(100, 100);
-    glutCreateWindow(" dda line ");
+    glutInitWindowSize(500, 500);
+    glutInitWindowPosition(0, 0);
+    glutCreateWindow("OPENGL EXAMPLE 1");
     init();
     glutDisplayFunc(display);
     glutMainLoop();
+    return 0;
 }
