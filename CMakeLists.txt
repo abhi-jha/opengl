@@ -3,9 +3,9 @@ project(opengl_the_cherno)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
-find_package (PkgConfig REQUIRED)
-find_package (OpenGL REQUIRED)
-find_package (GLUT REQUIRED)
+#find_package (PkgConfig REQUIRED)
+#find_package (OpenGL REQUIRED)
+#find_package (GLUT REQUIRED)
 set(GLEW_INCLUDE_DIR, "/home/user/Music/glew-2.1.0/include/")
 set(GLEW_LIBRARY, "/home/user/Music/glew-2.1.0/lib/")
 
