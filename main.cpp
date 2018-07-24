@@ -1,128 +1,85 @@
-#include <math.h>
-#include <GL/glut.h>
-#include <zconf.h>
-#include <iostream>
 
-struct Point {
-    GLint x;
-    GLint y;
-};
+#include <GL/glut.h>  // GLUT, include glu.h and gl.h
 
-struct Color {
-    GLfloat r;
-    GLfloat g;
-    GLfloat b;
-};
+// global variable
+GLfloat angle = 0.0f;  // rotational angle of the shapes
+int refreshMills = 30; // refresh interval in milliseconds
 
-void init() {
-    glClearColor(1.0, 1.0, 1.0, 0.0);
-    glColor3f(0.0, 0.0, 0.0);
-    glPointSize(1.0);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, 640, 0, 480);
+/* Initialize OpenGL Graphics */
+void initGL() {
+    // Set "clearing" or background color
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
 }
 
-Color getPixelColor(GLint x, GLint y) {
-    Color color;
-    glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, &color);
-    return color;
+/* Called back when timer expired */
+void Timer(int value) {
+    glutPostRedisplay();      // Post re-paint request to activate display()
+    glutTimerFunc(refreshMills, Timer, 0); // next Timer call milliseconds later
 }
 
-void setPixelColor(GLint x, GLint y, Color color) {
-    glColor3f(color.r, color.g, color.b);
-    glBegin(GL_POINTS);
-    glVertex2i(x, y);
+/* Handler for window-repaint event. Call back when the window first appears and
+whenever the window needs to be re-painted. */
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);   // Clear the color buffer
+    glMatrixMode(GL_MODELVIEW);     // To operate on Model-View matrix
+    glLoadIdentity();               // Reset the model-view matrix
+
+    glPushMatrix();                     // Save model-view matrix setting
+    glTranslatef(-0.5f, 0.4f, 0.0f);    // Translate
+    glRotatef(angle, 55.0f, 55.0f, 55.0f); // rotate by angle in degrees
+    glBegin(GL_QUADS);                  // Each set of 4 vertices form a quad
+    glColor3f(1.0f, 0.0f, 0.0f);     // Red
+    glVertex2f(-0.3f, -0.3f);
+    glVertex2f(0.3f, -0.3f);
+    glVertex2f(0.3f, 0.3f);
+    glVertex2f(-0.3f, 0.3f);
     glEnd();
-    glFlush();
+    glPopMatrix();                      // Restore the model-view matrix
 
+
+    // Restore the model-view matrix
+
+    glutSwapBuffers();   // Double buffered - swap the front and back buffers
+
+    // Change the rotational angle after each display()
+    angle += 2.0f;
 }
 
-void BoundaryFill(int x, int y, Color fillColor, Color boundaryColor) {
-    Color currentColor = getPixelColor(x, y);
-    if (currentColor.r != boundaryColor.r && currentColor.g != boundaryColor.g && currentColor.b != boundaryColor.b) {
-        setPixelColor(x, y, fillColor);
-        BoundaryFill(x + 1, y, fillColor, boundaryColor);
-        BoundaryFill(x - 1, y, fillColor, boundaryColor);
-        BoundaryFill(x, y + 1, fillColor, boundaryColor);
-        BoundaryFill(x, y - 1, fillColor, boundaryColor);
-    }
-}
+/* Handler for window re-size event. Called back when the window first appears and
+whenever the window is re-sized with its new width and height */
+void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
+    // Compute aspect ratio of the new window
+    if (height == 0) height = 1;                // To prevent divide by 0
+    GLfloat aspect = (GLfloat)width / (GLfloat)height;
 
-void onMouseClick(int button, int state, int x, int y)
-{
-    Color fillColor = { 1.0f, 0.0f, 0.0f };		// red color will be filled
-    Color boundaryColor = { 0.0f, .0f, 0.0f }; // black- boundary
+    // Set the viewport to cover the new window
+    glViewport(0, 0, width, height);
 
-    Point p = { 321, 241 }; // a point inside the square
-
-    BoundaryFill(p.x, p.y, fillColor, boundaryColor);
-
-    std::cout<<"here1";
-}
-
-void draw_dda(Point p1, Point p2) {
-    GLfloat dx = p2.x - p1.x;
-    GLfloat dy = p2.y - p1.y;
-
-    GLfloat x1 = p1.x;
-    GLfloat y1 = p1.y;
-
-    GLfloat step = 0;
-
-    if (abs(dx) > abs(dy)) {
-        step = abs(dx);
+    // Set the aspect ratio of the clipping area to match the viewport
+    glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+    glLoadIdentity();
+    if (width >= height) {
+        // aspect >= 1, set the height from -1 to 1, with larger width
+        gluOrtho2D(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0);
     }
     else {
-        step = abs(dy);
-    }
-
-    GLfloat xInc = dx / step;
-    GLfloat yInc = dy / step;
-
-    for (float i = 1; i <= step; i++) {
-        glVertex2i(x1, y1);
-        x1 += xInc;
-        y1 += yInc;
+        // aspect < 1, set the width to -1 to 1, with larger height
+        gluOrtho2D(-1.0, 1.0, -1.0 / aspect, 1.0 / aspect);
     }
 }
 
-void draw_square(Point a, GLint length) {
-    Point b = { a.x + length, a.y },
-            c = { b.x, b.y + length },
-            d = { c.x - length, c.y };
-
-    draw_dda(a, b);
-    draw_dda(b, c);
-    draw_dda(c, d);
-    draw_dda(d, a);
-}
-
-void display(void) {
-    Point pt = { 320, 240 };
-    GLfloat length = 50;
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBegin(GL_POINTS);
-    draw_square(pt, length);
-    glEnd();
-    glFlush();
-}
-void s(int a, int b, int c, int d){
-    sleep(5);
-    std::cout<<"\nhere2";
-}
-
-int main(int argc, char** argv)
-{
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(640, 480);
-    glutInitWindowPosition(200, 200);
-    glutCreateWindow("Open GL");
-    init();
-    glutDisplayFunc(display);
-    glutMouseFunc(onMouseClick);
-    glutMainLoop();
+/* Main function: GLUT runs as a console application starting at main() */
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);          // Initialize GLUT
+    glutInitDisplayMode(GLUT_SINGLE);  // Enable double buffered mode
+    glutInitWindowSize(640, 480);   // Set the window's initial width & height - non-square
+    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
+    glutCreateWindow("Animation via Idle Function");  // Create window with the given title
+    glutDisplayFunc(display);       // Register callback handler for window re-paint event
+    glutReshapeFunc(reshape);       // Register callback handler for window re-size event
+    glutTimerFunc(0, Timer, 0);     // First timer call immediately
+    //initGL();                       // Our own OpenGL initialization
+    glutMainLoop();                 // Enter the infinite event-processing loop
     return 0;
 }
+
