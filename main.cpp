@@ -1,85 +1,67 @@
+//Parametric spiral 
 
-#include <GL/glut.h>  // GLUT, include glu.h and gl.h
+#include<GL/glut.h>
+#include<stdio.h>
+#include<math.h>
 
-// global variable
-GLfloat angle = 0.0f;  // rotational angle of the shapes
-int refreshMills = 30; // refresh interval in milliseconds
+int a,b,c,d;
 
-/* Initialize OpenGL Graphics */
-void initGL() {
-    // Set "clearing" or background color
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black and opaque
+void drawspiral(int x,int y,int turns,int r)
+{
+    float xp,yp,i,t;
+    for(i=0;i<turns;i++)
+    {
+        t=(3.1459*i)/180;
+        xp=x+r*(t-sin(t));
+        yp=y+r*(1-cos(t));
+        glBegin(GL_POINTS);
+        glVertex2f(xp,yp);
+        glEnd();
+    }
 }
 
-/* Called back when timer expired */
-void Timer(int value) {
-    glutPostRedisplay();      // Post re-paint request to activate display()
-    glutTimerFunc(refreshMills, Timer, 0); // next Timer call milliseconds later
-}
-
-/* Handler for window-repaint event. Call back when the window first appears and
-whenever the window needs to be re-painted. */
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);   // Clear the color buffer
-    glMatrixMode(GL_MODELVIEW);     // To operate on Model-View matrix
-    glLoadIdentity();               // Reset the model-view matrix
-
-    glPushMatrix();                     // Save model-view matrix setting
-    glTranslatef(-0.5f, 0.4f, 0.0f);    // Translate
-    glRotatef(angle, 55.0f, 55.0f, 55.0f); // rotate by angle in degrees
-    glBegin(GL_QUADS);                  // Each set of 4 vertices form a quad
-    glColor3f(1.0f, 0.0f, 0.0f);     // Red
-    glVertex2f(-0.3f, -0.3f);
-    glVertex2f(0.3f, -0.3f);
-    glVertex2f(0.3f, 0.3f);
-    glVertex2f(-0.3f, 0.3f);
+void drawaxes()
+{
+    glColor3f(1.0,1.0,1.0);
+    glBegin(GL_LINES);
+    glVertex2i(0,-1000);
+    glVertex2i(0,1000);
+    glVertex2i(-1000,0);
+    glVertex2i(1000,0);
     glEnd();
-    glPopMatrix();                      // Restore the model-view matrix
-
-
-    // Restore the model-view matrix
-
-    glutSwapBuffers();   // Double buffered - swap the front and back buffers
-
-    // Change the rotational angle after each display()
-    angle += 2.0f;
 }
 
-/* Handler for window re-size event. Called back when the window first appears and
-whenever the window is re-sized with its new width and height */
-void reshape(GLsizei width, GLsizei height) {  // GLsizei for non-negative integer
-    // Compute aspect ratio of the new window
-    if (height == 0) height = 1;                // To prevent divide by 0
-    GLfloat aspect = (GLfloat)width / (GLfloat)height;
-
-    // Set the viewport to cover the new window
-    glViewport(0, 0, width, height);
-
-    // Set the aspect ratio of the clipping area to match the viewport
-    glMatrixMode(GL_PROJECTION);  // To operate on the Projection matrix
+void init()
+{
+    glClearColor(0.0,0.0,0.0,0.0);
     glLoadIdentity();
-    if (width >= height) {
-        // aspect >= 1, set the height from -1 to 1, with larger width
-        gluOrtho2D(-1.0 * aspect, 1.0 * aspect, -1.0, 1.0);
-    }
-    else {
-        // aspect < 1, set the width to -1 to 1, with larger height
-        gluOrtho2D(-1.0, 1.0, -1.0 / aspect, 1.0 / aspect);
-    }
+    gluOrtho2D(-500,500,-500,500);
 }
 
-/* Main function: GLUT runs as a console application starting at main() */
-int main(int argc, char** argv) {
-    glutInit(&argc, argv);          // Initialize GLUT
-    glutInitDisplayMode(GLUT_SINGLE);  // Enable double buffered mode
-    glutInitWindowSize(640, 480);   // Set the window's initial width & height - non-square
-    glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
-    glutCreateWindow("Animation via Idle Function");  // Create window with the given title
-    glutDisplayFunc(display);       // Register callback handler for window re-paint event
-    glutReshapeFunc(reshape);       // Register callback handler for window re-size event
-    glutTimerFunc(0, Timer, 0);     // First timer call immediately
-    //initGL();                       // Our own OpenGL initialization
-    glutMainLoop();                 // Enter the infinite event-processing loop
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFlush();
+
+    a=0; b=0; c=4;//c=turns
+    d=20;//radius
+
+    glColor3f(0.0,1.0,0.0);
+    drawspiral(a,b,c*360,d);
+    glFlush();
+    drawaxes();
+    glFlush();
+}
+
+int main(int argc, char** argv)
+{
+    glutInit(&argc, argv);
+    glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize (500, 500);
+    glutInitWindowPosition (0, 0);
+    glutCreateWindow (" Parametric cycloid ");
+    init ();
+    glutDisplayFunc(display);
+    glutMainLoop();
     return 0;
 }
-
