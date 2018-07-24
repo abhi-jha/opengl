@@ -1,81 +1,128 @@
+#include <math.h>
+#include <GL/glut.h>
+#include <zconf.h>
 #include <iostream>
-#include <cmath>
-#include "GL/glew.h"
-#include "GL/freeglut.h"
-#define ROUND(a) ((int)(a+0.5))
-int cor_1, cor_2, cor_3, cor_4;
-void setDrawingColor(GLfloat d = 255.0, GLfloat e = 255.0, GLfloat f = 255.0)
-{
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glColor3f(d, e, f);
-}
-void init()
-{
+
+struct Point {
+    GLint x;
+    GLint y;
+};
+
+struct Color {
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+};
+
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glColor3f(0.0, 0.0, 0.0);
+    glPointSize(1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, 500.0, 0.0, 500.0);
-    glMatrixMode(GL_MODELVIEW);
+    gluOrtho2D(0, 640, 0, 480);
 }
-void setPixel(int x, int y)
-{
-    setDrawingColor(0.0, 255.0, 0.0);
+
+Color getPixelColor(GLint x, GLint y) {
+    Color color;
+    glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, &color);
+    return color;
+}
+
+void setPixelColor(GLint x, GLint y, Color color) {
+    glColor3f(color.r, color.g, color.b);
     glBegin(GL_POINTS);
     glVertex2i(x, y);
     glEnd();
     glFlush();
+
 }
-void setAxes()
+
+void BoundaryFill(int x, int y, Color fillColor, Color boundaryColor) {
+    Color currentColor = getPixelColor(x, y);
+    if (currentColor.r != boundaryColor.r && currentColor.g != boundaryColor.g && currentColor.b != boundaryColor.b) {
+        setPixelColor(x, y, fillColor);
+        BoundaryFill(x + 1, y, fillColor, boundaryColor);
+        BoundaryFill(x - 1, y, fillColor, boundaryColor);
+        BoundaryFill(x, y + 1, fillColor, boundaryColor);
+        BoundaryFill(x, y - 1, fillColor, boundaryColor);
+    }
+}
+
+void onMouseClick(int button, int state, int x, int y)
 {
-    setDrawingColor(0.0, 255.0, 255.0);
-    glBegin(GL_LINE_STRIP);
-    glVertex2i(250, 250);
-    glVertex2i(450, 250);
-    glVertex2i(250, 250);
-    glVertex2i(250, 450);
-    glVertex2i(250, 250);
-    glVertex2i(250, 50);
-    glVertex2i(250, 250);
-    glVertex2i(50, 250);
+    Color fillColor = { 1.0f, 0.0f, 0.0f };		// red color will be filled
+    Color boundaryColor = { 0.0f, .0f, 0.0f }; // black- boundary
+
+    Point p = { 321, 241 }; // a point inside the square
+
+    BoundaryFill(p.x, p.y, fillColor, boundaryColor);
+
+    std::cout<<"here1";
+}
+
+void draw_dda(Point p1, Point p2) {
+    GLfloat dx = p2.x - p1.x;
+    GLfloat dy = p2.y - p1.y;
+
+    GLfloat x1 = p1.x;
+    GLfloat y1 = p1.y;
+
+    GLfloat step = 0;
+
+    if (abs(dx) > abs(dy)) {
+        step = abs(dx);
+    }
+    else {
+        step = abs(dy);
+    }
+
+    GLfloat xInc = dx / step;
+    GLfloat yInc = dy / step;
+
+    for (float i = 1; i <= step; i++) {
+        glVertex2i(x1, y1);
+        x1 += xInc;
+        y1 += yInc;
+    }
+}
+
+void draw_square(Point a, GLint length) {
+    Point b = { a.x + length, a.y },
+            c = { b.x, b.y + length },
+            d = { c.x - length, c.y };
+
+    draw_dda(a, b);
+    draw_dda(b, c);
+    draw_dda(c, d);
+    draw_dda(d, a);
+}
+
+void display(void) {
+    Point pt = { 320, 240 };
+    GLfloat length = 50;
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBegin(GL_POINTS);
+    draw_square(pt, length);
     glEnd();
     glFlush();
 }
-void DDA(int cor_1, int cor_2, int cor_3, int cor_4)
-{
-    int dx, dy,step,offset=250;
-    dx = (cor_3 - cor_1);
-    dy = (cor_4 - cor_2);
-    if (abs(dx) > abs(dy))
-        step = abs(dx);
-    else
-        step = abs(dy);
-    setPixel(offset+cor_3, offset+cor_4);
-    for (int i = 0; i < step; i++)
-    {
-        cor_1 = cor_1 + dx / step;
-        cor_2 = cor_2 + dy / step;
-        std::cout << "cor_1 = " << cor_1 << "  cor_2 = " << cor_2 << "\n";
-        setPixel(offset+ROUND(cor_1), offset+ROUND(cor_2));
-    }
+void s(int a, int b, int c, int d){
+    sleep(5);
+    std::cout<<"\nhere2";
 }
-void display()
+
+int main(int argc, char** argv)
 {
-    setAxes();
-    if (cor_1 < cor_3)
-        DDA(cor_1, cor_2, cor_3, cor_4);
-    else
-        DDA(cor_3, cor_4, cor_1, cor_2);
-}
-int main(int argc, char **argv)
-{
-    std::cout << "Enter the coordinates\n";
-    std::cin >> cor_1 >> cor_2 >> cor_3 >> cor_4;
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(500, 500);
-    glutInitWindowPosition(0, 0);
-    glutCreateWindow("OPENGL EXAMPLE 1");
+    glutInitWindowSize(640, 480);
+    glutInitWindowPosition(200, 200);
+    glutCreateWindow("Open GL");
     init();
     glutDisplayFunc(display);
+    glutMouseFunc(onMouseClick);
     glutMainLoop();
     return 0;
 }
