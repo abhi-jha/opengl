@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(opengl_the_cherno)
+project(opengl)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
@@ -15,8 +15,8 @@ file(GLOB SOURCE_FILES
         *.h
         )
 
-add_executable(opengl_the_cherno ${SOURCE_FILES})
+add_executable(opengl ${SOURCE_FILES})
 
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
-target_link_libraries (opengl_the_cherno ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} GL m GLU glut dl GLEW Xinerama Xrandr Xi Xcursor X11 Xxf86vm pthread)
+target_link_libraries (opengl ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} GL m GLU glut dl GLEW Xinerama Xrandr Xi Xcursor X11 Xxf86vm pthread)
