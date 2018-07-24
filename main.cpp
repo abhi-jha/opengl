@@ -2,8 +2,8 @@
 #include<stdio.h>
 #include<math.h>
 
-void setPixel(int x,int y);
-
+void setPixel(int x,int y)
+;
 struct points
 {
     int x;
@@ -17,9 +17,52 @@ struct circle
     int r;
 } c1,c2;
 
-//i1,i2intersection points
-
+float oldcolor[3],fillcolor[3];
 int status; //to store the status of intersection
+int top;
+
+void push(int x,int y)
+{
+    top++;
+    if(top==100000)
+        exit(0);
+    p[top].x=x;
+    p[top].y=y;
+}
+
+void pop(int *x,int *y)
+{
+    *x=p[top].x; *y=p[top].y;
+    top--;
+}
+
+void floodfill(int x,int y)
+{
+    int xc,yc;
+    push(x,y);
+    float currentcolor[3];
+    setPixel(x,y);
+    glColor3fv(fillcolor);
+    while(top>0)
+    {
+        pop(&xc,&yc);
+        glReadPixels(xc+3,yc,1.0,1.0,GL_RGB,GL_FLOAT,currentcolor);
+        if(currentcolor[0]==oldcolor[0] && currentcolor[1]==oldcolor[1] && currentcolor[2]==oldcolor[2])
+        { setPixel(xc+3,yc); push(xc+3,yc); }
+
+        glReadPixels(xc-3,yc,1.0,1.0,GL_RGB,GL_FLOAT,currentcolor);
+        if(currentcolor[0]==oldcolor[0] && currentcolor[1]==oldcolor[1] && currentcolor[2]==oldcolor[2])
+        { setPixel(xc-3,yc); push(xc-3,yc); }
+
+        glReadPixels(xc,yc+3,1.0,1.0,GL_RGB,GL_FLOAT,currentcolor);
+        if(currentcolor[0]==oldcolor[0] && currentcolor[1]==oldcolor[1] && currentcolor[2]==oldcolor[2])
+        { setPixel(xc,yc+3); push(xc,yc+3); }
+
+        glReadPixels(xc,yc-3,1.0,1.0,GL_RGB,GL_FLOAT,currentcolor);
+        if(currentcolor[0]==oldcolor[0] && currentcolor[1]==oldcolor[1] && currentcolor[2]==oldcolor[2])
+        { setPixel(xc,yc-3); push(xc,yc-3); }
+    }
+}
 
 void bresenhamcircle(int xcenter,int ycenter,int radius)
 {
@@ -46,7 +89,7 @@ void bresenhamcircle(int xcenter,int ycenter,int radius)
         setPixel(xcenter-y,ycenter+x);
         setPixel(xcenter-y,ycenter-x);
     }
-    glFlush();
+
 }
 
 void drawaxes()
@@ -66,6 +109,7 @@ void setPixel(int x,int y)
     glBegin(GL_POINTS);
     glVertex2f(x,y);
     glEnd();
+    glFlush();
 }
 
 int c2cintersection(int xa,int ya,int ra,int xb,int yb,int rb)
@@ -89,7 +133,11 @@ int c2cintersection(int xa,int ya,int ra,int xb,int yb,int rb)
     if(d >(ra + rb)) //no solution they do not intersect;
         return 0;
     if(d <abs(ra-rb))// circle is inside another circle
+    {
+        if(ra<rb) { s.x=xa; s.y=ya; }
+        else {s.x=xb; s.y=yb;}
         return -1;
+    }
     //s is the point where the line through circle intersection points cross through circle centres a is the distance to pselect from (xa,ya)//
 
     a = ((ra*ra) - (rb*rb) + (d*d)) / (2.0 * d) ;
@@ -104,11 +152,11 @@ int c2cintersection(int xa,int ya,int ra,int xb,int yb,int rb)
 
 void getdata()
 {
-    c1.x=0;
-    c1.y=0;
+    c1.x=500;
+    c1.y=500;
     c1.r=200;
-    c2.x=250;
-    c2.y=0;
+    c2.x=750;
+    c2.y=500;
     c2.r=100;
 }
 
@@ -117,7 +165,7 @@ void init()
 {
     glClearColor(0.0,0.0,0.0,0.0);
     glLoadIdentity();
-    gluOrtho2D(-500,500,-500,500);
+    gluOrtho2D(0,1000,0,1000);
 }
 
 
@@ -125,22 +173,31 @@ void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glFlush();
+    glColor3f(1.0,0.0,0.0);
+    glPointSize(3);
     bresenhamcircle(c1.x,c1.y,c1.r);
+    glPointSize(3);
+    glColor3f(1.0,0.0,0.0);
     bresenhamcircle(c2.x,c2.y,c2.r);
-    setPixel(s.x,s.y);
-    glFlush();
+    glReadPixels(s.x,s.y,1.0,1.0,GL_RGB,GL_FLOAT,oldcolor);
+    glEnable(GL_POINT_SMOOTH);
+    floodfill(s.x,s.y);
+    glColor3f(1.0,0.0,0.0);
+//setPixel(s.x,s.y);
 //drawaxes();
 }
 
 
 int main(int argc, char** argv)
 {
+    fillcolor[0]=0.0; fillcolor[1]=0.0; fillcolor[2]=1.0;
+
     getdata();
     status=c2cintersection(c1.x,c1.y,c1.r,c2.x,c2.y,c2.r);
     printf("%d",status);
     glutInit(&argc, argv);
     glutInitDisplayMode (GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize (500, 500);
+    glutInitWindowSize (1000, 1000);
     glutInitWindowPosition (0, 0);
     glutCreateWindow (" ");
     init ();
