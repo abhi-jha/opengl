@@ -1,6 +1,7 @@
 #include<GL/glut.h>
 #include<cstdio>
 #include<cmath>
+#include <zconf.h>
 
 void setPixel(float xc,float yc,float x,float y)
 {
@@ -39,6 +40,7 @@ void balloverball()
             drawball(0,0,100);
             glColor3f(0.0,0.0,1.0);
             drawball((150*cos((i*3.1459)/180)),(150*sin((i*3.1459)/180)),50);
+            usleep(10000);
             glFlush();
         }
         count++;
